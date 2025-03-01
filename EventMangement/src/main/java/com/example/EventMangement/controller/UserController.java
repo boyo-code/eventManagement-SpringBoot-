@@ -3,6 +3,7 @@ package com.example.EventMangement.controller;
 import com.example.EventMangement.model.User;
 import com.example.EventMangement.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,17 +25,20 @@ public class UserController {
 
     // GET /api/users/{userId} - Get user details
     @GetMapping("/{userId}")
+    @PreAuthorize(" hasAuthority('ADMIN')")
     public ResponseEntity<User> getUser(@PathVariable Long userId) {
         return userService.findById(userId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 @GetMapping("/api/allusers")
+@PreAuthorize(" hasAuthority('ADMIN')")
 public List<User> getAllUsers(@PathVariable User user){
         return userService.allUsers(user);
 }
     // PUT /api/users/{userId} - Update user details
     @PutMapping("/{userId}")
+
     public ResponseEntity<User> updateUser(@PathVariable Long userId, @RequestBody User userDetails) {
         return ResponseEntity.ok(userService.updateUser(userId, userDetails));
     }

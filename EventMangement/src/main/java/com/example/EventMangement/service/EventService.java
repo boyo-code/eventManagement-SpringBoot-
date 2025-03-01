@@ -31,48 +31,54 @@ public class EventService {
     }
 
     // Create a new event (Only Organizers & Admins)
-    public Events createEvent(Events event, Long organizerId, Long venueId) {
-        User organizer = userRepository.findById(organizerId)
+    public Events createEvent(Events event) {
+        User organizer = userRepository.findById(event.getOrganiser().getUserId())
                 .orElseThrow(() -> new RuntimeException("Organizer not found"));
         String role = organizer.getRole();
         if (role == null || (!role.equalsIgnoreCase("Organizer") && !role.equalsIgnoreCase("ADMIN"))) {
             throw new RuntimeException("Only organizers or admins can create events");
         }
 
-        Venues venue = venueRepository.findById(venueId)
-                .orElseThrow(() -> new RuntimeException("Venue not found"));
-        event.setOrganiser(organizer);
+        // Check if venue already exists by location
+        Venues venue = venueRepository.findByLocation(event.getVenue().getLocation())
+                .orElseGet(() -> {
+                    // If venue does not exist, create a new one
+                    Venues newVenue = new Venues();
+                    newVenue.setLocation(event.getVenue().getLocation());
+                    newVenue.setName(event.getVenue().getName());
+                    newVenue.setCapacity(event.getVenue().getCapacity());
+                    newVenue.setDescription(event.getVenue().getDescription());
+                    return venueRepository.save(newVenue);
+                });
         event.setVenue(venue);
         return eventRepository.save(event);
     }
 
 
     // Update event (Only the event organiser or an admin can update)
-    public Events updateEvent(Long eventId, Events eventDetails, Long userId) {
-        Events event = eventRepository.findById(eventId)
+    public Events updateEvent(Events event) {
+        Events existingEvent = eventRepository.findById(event.getEventId())
                 .orElseThrow(() -> new RuntimeException("Event not found"));
-        // Compare using primitives; adjust as needed if userId is a Long.
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User organizer = existingEvent.getOrganiser();
 
-        if (!event.getOrganiser().getUserId().equals(userId) &&
-                !user.getRole().equalsIgnoreCase("ADMIN")) {
-            throw new RuntimeException("You do not have permission to update this event");
+        // Ensure the user updating is the event's creator
+        if (!organizer.getUserId().equals(event.getOrganiser().getUserId())) {
+            throw new RuntimeException("You are not authorized to update this event.");
         }
 
-        event.setName(eventDetails.getName());
-        event.setDescription(eventDetails.getDescription());
-        event.setStartDateTime(eventDetails.getStartDateTime());
-        event.setEndDateTime(eventDetails.getEndDateTime());
-        event.setPrice(eventDetails.getPrice());
+        event.setName(event.getName());
+        event.setDescription(event.getDescription());
+        event.setStartDateTime(event.getStartDateTime());
+        event.setEndDateTime(event.getEndDateTime());
+        event.setPrice(event.getPrice());
         return eventRepository.save(event);
     }
 
     // Delete event (Only Admins can delete an event)
-    public void deleteEvent(Long eventId, Long userId) {
+    public void deleteEvent(Long eventId) {
         Events event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(event.getOrganiser().getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (!user.getRole().equalsIgnoreCase("ADMIN")) {
             throw new RuntimeException("Only admins can delete events");
