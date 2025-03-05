@@ -11,4 +11,7 @@ import java.util.List;
 public interface RegistrationRepository extends JpaRepository<Registration, Long> {
     // Get all registrations for a given event
     List<Registration> findByEvent(Events event);
+    
+    // Get all registrations for a given event ID
+    List<Registration> findByEvent_EventId(Long eventId);
 }

@@ -1,36 +1,51 @@
 package com.example.EventMangement.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "registrations")
+@Data
+@Schema(description = "Represents an event registration")
 public class Registration {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JoinColumn(name = "registrationid", nullable = false)
-    private Long registrationid;
+    @Column(name = "registrationid")
+    @Schema(description = "Unique identifier of the registration")
+    private Long registrationId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "eventid", nullable = false)
+    @NotNull(message = "Event is required")
+    @Schema(description = "The event this registration is for")
     private Events event;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "attendeeid", nullable = false)
+    @NotNull(message = "Attendee is required")
+    @Schema(description = "The user who registered for the event")
     private User attendee;
-    @Column(name = "registrationdate")
-    private LocalDateTime registrationDate = LocalDateTime.now();
 
-    @Column(nullable = false)
-    private String status = "Confirmed";  // Default value
+    @NotNull(message = "Registration date is required")
+    @Column(name = "registrationdate")
+    @Schema(description = "Date and time when the registration was created")
+    private LocalDateTime registrationDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Schema(description = "Current status of the registration")
+    private RegistrationStatus status;
 
     // Getters and Setters
     public Long getId() {
-        return registrationid;
+        return registrationId;
     }
     public void setId(Long id) {
-        this.registrationid = id;
+        this.registrationId = id;
     }
     public Events getEvent() {
         return event;
@@ -50,10 +65,10 @@ public class Registration {
     public void setRegistrationDate(LocalDateTime registrationDate) {
         this.registrationDate = registrationDate;
     }
-    public String getStatus() {
+    public RegistrationStatus getStatus() {
         return status;
     }
-    public void setStatus(String status) {
+    public void setStatus(RegistrationStatus status) {
         this.status = status;
     }
 }

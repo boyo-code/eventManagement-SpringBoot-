@@ -1,50 +1,56 @@
 package com.example.EventMangement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import java.util.List;
 
 @Entity
-@Table(name = "Users")
+@Table(name = "users")
+@Data
+@Schema(description = "Represents a user in the system")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userid;
+    @Column(name = "userid")
+    @Schema(description = "Unique identifier of the user")
+    private Long userId;
 
+    @NotBlank(message = "Name is required")
+    @Size(max = 100)
+    @Column(name = "name")
+    @Schema(description = "Name of the user")
     private String name;
 
-    @Column(unique = true)
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    @Size(max = 100)
+    @Column(name = "email", unique = true)
+    @Schema(description = "Email address of the user")
     private String email;
 
+    @NotBlank(message = "Password is required")
+    @Size(max = 255)
+    @Column(name = "password")
+    @Schema(description = "Password of the user (hashed)")
     private String password;
-    private String role;
 
-    public Long getUserId() {
-        return userid;
-    }
-    public void setUserId(Long userid) {
-        this.userid = userid;
-    }
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    public String getPassword() {
-        return password;
-    }
-    public void setPassword(String password) {
-        this.password = password;
-    }
-    public String getRole() {
-        return role;
-    }
-    public void setRole(String role) {
-        this.role = role;
-    }
+    @Convert(converter = Role.RoleConverter.class)
+    @Column(name = "role", columnDefinition = "varchar(20)")
+    @Schema(description = "Role of the user (ADMIN, ORGANIZER, ATTENDEE)")
+    private Role role;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "organiser", cascade = CascadeType.ALL)
+    @Schema(description = "List of events organized by this user")
+    private List<Events> organizedEvents;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "attendee", cascade = CascadeType.ALL)
+    @Schema(description = "List of event registrations for this user")
+    private List<Registration> registrations;
 }

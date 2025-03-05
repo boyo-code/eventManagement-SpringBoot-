@@ -1,41 +1,73 @@
 package com.example.EventMangement.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.Data;
+import org.hibernate.annotations.Type;
 
 @Entity
-@Table(name = "Events")
+@Table(name = "events")
+@Data
+@Schema(description = "Represents an event in the system")
 public class Events {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "eventid")
+    @Schema(description = "Unique identifier of the event")
     private Long eventId;
 
+    @NotBlank(message = "Event name is required")
+    @Size(max = 150)
+    @Column(name = "name")
+    @Schema(description = "Name of the event")
     private String name;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    @Schema(description = "Detailed description of the event")
     private String description;
-    @Column(name = "startdatetime")
-    private LocalDateTime startDateTime;
-    @Column(name = "enddatetime")
-    private LocalDateTime endDateTime;
 
-
-    // Price for registration to this event
-    @Column(precision = 10, scale = 2)
-    private BigDecimal price;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizerid", nullable = false)
+    @NotNull(message = "Organizer is required")
+    @Schema(description = "User who organized the event")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User organiser;
 
-    @ManyToOne
+    @NotNull(message = "Start date and time is required")
+    @Column(name = "startdatetime")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "Start date and time of the event")
+    private LocalDateTime startDateTime;
+
+    @NotNull(message = "End date and time is required")
+    @Column(name = "enddatetime")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "End date and time of the event")
+    private LocalDateTime endDateTime;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "venueid", nullable = false)
+    @NotNull(message = "Venue is required")
+    @Schema(description = "Venue where the event will take place")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Venues venue;
 
-    // One event can have many registrations.
+    @NotNull(message = "Price is required")
+    @Positive(message = "Price must be positive")
+    @Column(name = "price", columnDefinition = "decimal")
+    @Schema(description = "Price for registration to this event", example = "99.99")
+    private BigDecimal price;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL)
+    @Schema(description = "List of registrations for this event")
     private List<Registration> registrations;
 
     // Getters and Setters

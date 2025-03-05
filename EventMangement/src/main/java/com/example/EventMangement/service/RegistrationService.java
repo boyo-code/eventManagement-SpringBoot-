@@ -1,37 +1,47 @@
 package com.example.EventMangement.service;
 
+import com.example.EventMangement.Repository.RegistrationRepository;
 import com.example.EventMangement.model.Registration;
 import com.example.EventMangement.model.User;
-import com.example.EventMangement.Repository.RegistrationRepository;
-import com.example.EventMangement.Repository.EventRepository;
-import com.example.EventMangement.model.Events;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 public class RegistrationService {
     private final RegistrationRepository registrationRepository;
-    private final EventRepository eventRepository;
 
-    public RegistrationService(RegistrationRepository registrationRepository, EventRepository eventRepository) {
+    public RegistrationService(RegistrationRepository registrationRepository) {
         this.registrationRepository = registrationRepository;
-        this.eventRepository = eventRepository;
     }
 
-    // Existing methods...
+    @Transactional
+    public Registration registerForEvent(Registration registration) {
+        return registrationRepository.save(registration);
+    }
 
-    // New method: get users who registered for a given event
+    @Transactional(readOnly = true)
+    public List<Registration> getAllRegistrations() {
+        return registrationRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Registration> getRegistration(Long registrationId) {
+        return registrationRepository.findById(registrationId);
+    }
+
+    @Transactional(readOnly = true)
     public List<User> getUsersRegisteredForEvent(Long eventId) {
-        Events event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found"));
-
-        List<Registration> registrations = registrationRepository.findByEvent(event);
-
-        // Extract the attendees (users) from the registrations
-        return registrations.stream()
+        return registrationRepository.findByEvent_EventId(eventId)
+                .stream()
                 .map(Registration::getAttendee)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Transactional
+    public void cancelRegistration(Long registrationId) {
+        registrationRepository.deleteById(registrationId);
     }
 }
